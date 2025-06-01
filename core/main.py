@@ -4,6 +4,19 @@ import datetime
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
+import logging
+import psycopg2
+from psycopg2 import sql
+
+# Define logger for the module
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("core_app") # Use a fixed name for the logger
+
+# Test if logger is available immediately
+logger.info("Logger successfully initialized in core.main module.")
 
 # Load environment variables from .env file
 # When core/main.py is imported by a script in platforms/, '../.env' is correct.
@@ -77,11 +90,6 @@ if GEMINI_API_KEY:
         print("Gemini model initialized successfully.")
     except Exception as e:
         print(f"Error initializing Gemini model: {e}")
-
-# Ensure logging is imported for the logger definition below
-import logging
-import psycopg2
-from psycopg2 import sql
 
 # --- Database Setup ---
 DATABASE_URL = os.getenv("DATABASE_URL") # You'll set this in Render
@@ -258,12 +266,3 @@ if __name__ == '__main__':
         print("DATABASE_URL not set in .env. Skipping persistent chat test.")
     else:
         print("Gemini model not available for chat testing.")
-
-# Define logger for the module
-# This ensures 'logger' is defined before its use in generate_chat_response
-# and other parts of the module.
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
