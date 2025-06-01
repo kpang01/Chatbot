@@ -53,7 +53,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     text = update.message.text
 
     # Use the new generate_chat_response function from core_logic
-    response_text = core_logic.generate_chat_response(user_id, text)
+    # Pass the platform-specific logger
+    response_text = core_logic.generate_chat_response(user_id, text, logger)
     await update.message.reply_text(response_text)
 
 

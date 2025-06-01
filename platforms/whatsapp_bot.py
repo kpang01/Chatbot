@@ -53,7 +53,8 @@ def process_whatsapp_message(user_id: str, message_body: str) -> str:
     # Use the new generate_chat_response function from core_logic
     # The SYSTEM_INSTRUCTION in core_logic.py will guide the model's general behavior.
     # The user_id for WhatsApp will be their phone number (e.g., "whatsapp:+14155238886")
-    response_text = core_logic.generate_chat_response(user_id, message_body)
+    # Pass the platform-specific logger
+    response_text = core_logic.generate_chat_response(user_id, message_body, logger)
     return response_text
 
 @app.route("/whatsapp_webhook", methods=["POST"])

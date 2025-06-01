@@ -86,7 +86,8 @@ async def on_message(message):
     user_id = str(message.author.id)
     text = message.content
     
-    response_text = core_logic.generate_chat_response(user_id, text)
+    # Pass the platform-specific logger to the core logic
+    response_text = core_logic.generate_chat_response(user_id, text, logger)
     
     # Discord messages have a 2000 character limit.
     if len(response_text) > 2000:

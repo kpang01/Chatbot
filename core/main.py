@@ -95,19 +95,19 @@ if GEMINI_API_KEY:
 DATABASE_URL = os.getenv("DATABASE_URL") # You'll set this in Render
 MAX_HISTORY_MESSAGES = 20 # Store last 20 messages (user + model) for context
 
-def get_db_connection():
+def get_db_connection(logger_param):
     if not DATABASE_URL:
-        logger.error("DATABASE_URL environment variable not set.")
+        logger_param.error("DATABASE_URL environment variable not set.")
         return None
     try:
         conn = psycopg2.connect(DATABASE_URL)
         return conn
     except psycopg2.Error as e:
-        logger.error(f"Error connecting to PostgreSQL database: {e}")
+        logger_param.error(f"Error connecting to PostgreSQL database: {e}")
         return None
 
-def initialize_database():
-    conn = get_db_connection()
+def initialize_database(logger_param):
+    conn = get_db_connection(logger_param)
     if not conn:
         return
 
@@ -123,9 +123,9 @@ def initialize_database():
                 );
             """)
             conn.commit()
-        logger.info("Database initialized (chat_history table checked/created).")
+        logger_param.info("Database initialized (chat_history table checked/created).")
     except psycopg2.Error as e:
-        logger.error(f"Error initializing database table: {e}")
+        logger_param.error(f"Error initializing database table: {e}")
     finally:
         if conn:
             conn.close()
@@ -133,14 +133,14 @@ def initialize_database():
 # Call initialize_database when the module is loaded
 # This is a simple way; for more complex apps, you might do this in an explicit setup step.
 if DATABASE_URL: # Only attempt if DATABASE_URL is set
-    initialize_database()
+    initialize_database(logger) # Pass the global logger
 else:
     logger.warning("DATABASE_URL not set. Chat history will not be persistent.")
 
 
-def fetch_history_from_db(user_id: str):
+def fetch_history_from_db(user_id: str, logger_param):
     history = []
-    conn = get_db_connection()
+    conn = get_db_connection(logger_param)
     if not conn:
         return history # Return empty history if no DB connection
 
@@ -160,14 +160,14 @@ def fetch_history_from_db(user_id: str):
             for record in reversed(db_records): # Reverse to get chronological order
                 history.append({"role": record[0], "parts": [record[1]]})
     except psycopg2.Error as e:
-        logger.error(f"Error fetching history from DB for user {user_id}: {e}")
+        logger_param.error(f"Error fetching history from DB for user {user_id}: {e}")
     finally:
         if conn:
             conn.close()
     return history
 
-def save_message_to_db(user_id: str, role: str, content: str):
-    conn = get_db_connection()
+def save_message_to_db(user_id: str, role: str, content: str, logger_param):
+    conn = get_db_connection(logger_param)
     if not conn:
         return
 
@@ -182,7 +182,7 @@ def save_message_to_db(user_id: str, role: str, content: str):
             )
             conn.commit()
     except psycopg2.Error as e:
-        logger.error(f"Error saving message to DB for user {user_id}: {e}")
+        logger_param.error(f"Error saving message to DB for user {user_id}: {e}")
     finally:
         if conn:
             conn.close()
@@ -190,24 +190,24 @@ def save_message_to_db(user_id: str, role: str, content: str):
     # Optional: Prune old history to keep DB size manageable (more advanced)
     # e.g., delete messages older than MAX_HISTORY_MESSAGES for this user_id
 
-def generate_chat_response(user_id: str, current_message_text: str) -> str:
+def generate_chat_response(user_id: str, current_message_text: str, logger_param) -> str:
     if not model:
         return "Sorry, the AI model is not available at the moment. Please try again later."
 
     if not DATABASE_URL: # Fallback to in-memory if no DB
         # This part is now effectively removed by prioritizing DB
-        logger.warning("DATABASE_URL not set, using non-persistent in-memory history (not recommended for production).")
+        logger_param.warning("DATABASE_URL not set, using non-persistent in-memory history (not recommended for production).")
         # For simplicity, if DATABASE_URL is not set, we won't use history.
         # A proper in-memory fallback would re-implement the old conversation_history dict.
         try:
             response = model.generate_content(current_message_text)
             return response.text
         except Exception as e:
-            logger.error(f"Error during Gemini generation (no DB, no history): {e}")
+            logger_param.error(f"Error during Gemini generation (no DB, no history): {e}")
             return "Sorry, I encountered an error processing your request."
 
 
-    user_specific_history = fetch_history_from_db(user_id)
+    user_specific_history = fetch_history_from_db(user_id, logger_param)
     
     current_interaction_history = user_specific_history + [{"role": "user", "parts": [current_message_text]}]
 
@@ -215,17 +215,17 @@ def generate_chat_response(user_id: str, current_message_text: str) -> str:
         response = model.generate_content(current_interaction_history)
         response_text = response.text
 
-        save_message_to_db(user_id, "user", current_message_text)
-        save_message_to_db(user_id, "model", response_text)
+        save_message_to_db(user_id, "user", current_message_text, logger_param)
+        save_message_to_db(user_id, "model", response_text, logger_param)
         
         return response_text
     except Exception as e:
-        logger.error(f"Error during Gemini generation with DB history: {e}")
+        logger_param.error(f"Error during Gemini generation with DB history: {e}")
         try:
             response = model.generate_content(current_message_text)
             return response.text + " (Error with history, using simple response)"
         except Exception as e_simple:
-            logger.error(f"Error during fallback Gemini generation: {e_simple}")
+            logger_param.error(f"Error during fallback Gemini generation: {e_simple}")
             return "Sorry, I encountered an error processing your request."
 
 
@@ -234,6 +234,11 @@ if __name__ == '__main__':
     # The __main__ block test for generate_chat_response would need a DATABASE_URL to be set
     # or it will use the non-persistent path.
 
+    # Get the global logger instance for the main block
+    main_block_logger = logging.getLogger("core_app_main_block")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+
     print("\n--- Gemini Chat Test (with memory, requires DATABASE_URL to be set for persistence) ---")
     if model and DATABASE_URL: # Only run DB test if model and DB_URL are available
         # Ensure you have a .env file with DATABASE_URL for this test to work locally
@@ -241,7 +246,7 @@ if __name__ == '__main__':
         print("Attempting chat test with DB persistence...")
         test_user_id_db = "test_chat_user_db"
         # Clear history for this user for a clean test (optional)
-        conn_test = get_db_connection()
+        conn_test = get_db_connection(main_block_logger)
         if conn_test:
             with conn_test.cursor() as cur_test:
                 cur_test.execute("DELETE FROM chat_history WHERE user_id = %s", (test_user_id_db,))
@@ -249,17 +254,17 @@ if __name__ == '__main__':
             conn_test.close()
 
         print(f"User ({test_user_id_db}): Hello there, database bot!")
-        print(f"Bot: {generate_chat_response(test_user_id_db, 'Hello there, database bot!')}")
+        print(f"Bot: {generate_chat_response(test_user_id_db, 'Hello there, database bot!', main_block_logger)}")
         
         print(f"User ({test_user_id_db}): What is the capital of France?")
-        print(f"Bot: {generate_chat_response(test_user_id_db, 'What is the capital of France?')}")
+        print(f"Bot: {generate_chat_response(test_user_id_db, 'What is the capital of France?', main_block_logger)}")
 
         print(f"User ({test_user_id_db}): What was my first message to you?")
-        print(f"Bot: {generate_chat_response(test_user_id_db, 'What was my first message to you?')}")
+        print(f"Bot: {generate_chat_response(test_user_id_db, 'What was my first message to you?', main_block_logger)}")
         
         # Verify history in DB (you'd typically use a DB client for this)
         print(f"Current DB history for {test_user_id_db}:")
-        for item in fetch_history_from_db(test_user_id_db):
+        for item in fetch_history_from_db(test_user_id_db, main_block_logger):
             print(f"  {item['role']}: {item['parts'][0]}")
 
     elif not DATABASE_URL:
