@@ -1,0 +1,71 @@
+# render.yaml
+# Blueprint for deploying the Gemini Multichat Bot on Render
+# See https://render.com/docs/blueprint-spec for details
+
+# Define a group for shared environment variables (optional, but good practice)
+# You'll still need to set the actual secret values in the Render dashboard
+# or use Render's Secret Files feature for more sensitive keys.
+envVarGroups:
+  - name: common-secrets
+    envVars:
+      - key: PYTHON_VERSION # Specify Python version Render should use
+        value: "3.11.9" # Or your preferred compatible version
+      - key: PYTHONPATH
+        value: "/opt/render/project/src" # Add this to help Python find your module
+      - key: GEMINI_API_KEY
+        value: "YOUR_GEMINI_API_KEY_HERE" # Replace in Render dashboard
+      - key: DATABASE_URL # Add DATABASE_URL here
+        value: "YOUR_EXISTING_DATABASE_CONNECTION_STRING_HERE" # Replace in Render dashboard with your actual existing DB URL
+
+# Removed the 'databases:' section. You will use an existing database.
+# Ensure you set its connection string for DATABASE_URL in the common-secrets
+# group (or per service) in the Render dashboard.
+
+services:
+  # WhatsApp Bot (Flask Web Service)
+  - type: web
+    name: whatsapp-bot
+    env: python
+    plan: free # Use Render's free web service tier
+    region: oregon # Or your preferred region
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn gemini_multichat_bot.platforms.whatsapp_bot:app"
+    envVars:
+      - fromGroup: common-secrets # Inherits GEMINI_API_KEY and DATABASE_URL
+      - key: TWILIO_ACCOUNT_SID
+        value: "YOUR_TWILIO_ACCOUNT_SID_HERE" # Replace in Render dashboard
+      - key: TWILIO_AUTH_TOKEN
+        value: "YOUR_TWILIO_AUTH_TOKEN_HERE" # Replace in Render dashboard
+      - key: TWILIO_WHATSAPP_NUMBER
+        value: "YOUR_TWILIO_WHATSAPP_NUMBER_HERE" # Replace in Render dashboard
+    healthCheckPath: /whatsapp_webhook # Basic check, assumes POST is okay or add a GET /health route
+
+  # Telegram Bot (Attempting as Web Service due to free tier limitations on workers)
+  - type: web # Changed from worker to web
+    name: telegram-bot
+    env: python
+    plan: free # Use Render's free web service tier
+    region: oregon # Or your preferred region
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python -m gemini_multichat_bot.platforms.telegram_bot"
+    envVars:
+      - fromGroup: common-secrets # Inherits GEMINI_API_KEY and DATABASE_URL
+      - key: PYTHONPATH # Explicitly set here too for testing
+        value: "/opt/render/project/src"
+      - key: TELEGRAM_BOT_TOKEN
+        value: "YOUR_TELEGRAM_BOT_TOKEN_HERE" # Replace in Render dashboard
+
+  # Discord Bot (Attempting as Web Service due to free tier limitations on workers)
+  - type: web # Changed from worker to web
+    name: discord-bot
+    env: python
+    plan: free # Use Render's free web service tier
+    region: oregon # Or your preferred region
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python -m gemini_multichat_bot.platforms.discord_bot"
+    envVars:
+      - fromGroup: common-secrets # Inherits GEMINI_API_KEY, PYTHONPATH, and DATABASE_URL
+      - key: PYTHONPATH # Explicitly set here too for testing
+        value: "/opt/render/project/src"
+      - key: DISCORD_BOT_TOKEN
+        value: "YOUR_DISCORD_BOT_TOKEN_HERE" # Replace in Render dashboard
