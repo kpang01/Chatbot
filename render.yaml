@@ -40,8 +40,8 @@ services:
         value: "YOUR_TWILIO_WHATSAPP_NUMBER_HERE" # Replace in Render dashboard
     healthCheckPath: /whatsapp_webhook # Basic check, assumes POST is okay or add a GET /health route
 
-  # Telegram Bot (Attempting as Web Service due to free tier limitations on workers)
-  - type: web # Changed from worker to web
+  # Telegram Bot (Running as Worker)
+  - type: worker # Changed from web to worker
     name: telegram-bot
     env: python
     plan: free # Use Render's free web service tier
@@ -53,8 +53,8 @@ services:
       - key: TELEGRAM_BOT_TOKEN
         value: "YOUR_TELEGRAM_BOT_TOKEN_HERE" # Replace in Render dashboard
 
-  # Discord Bot (Attempting as Web Service due to free tier limitations on workers)
-  - type: web # Changed from worker to web
+  # Discord Bot (Running as Worker)
+  - type: worker # Changed from web to worker
     name: discord-bot
     env: python
     plan: free # Use Render's free web service tier
