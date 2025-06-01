@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 # Import core logic
 import re # For parsing due date
-from ..core import main as core_logic
+from core import main as core_logic
 
 # Load environment variables from .env file (expected in the parent directory)
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')

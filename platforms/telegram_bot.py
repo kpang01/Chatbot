@@ -9,7 +9,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import pytz # Import pytz
 
 # Import core logic
-from ..core import main as core_logic # Assuming core.main has the chatbot logic
+from core import main as core_logic # Assuming core.main has the chatbot logic
 
 # .env loading is now primarily handled by core/main.py
 # However, TELEGRAM_BOT_TOKEN is needed here before Application setup.

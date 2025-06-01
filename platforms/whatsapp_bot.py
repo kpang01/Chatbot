@@ -8,7 +8,7 @@ import logging
 from dotenv import load_dotenv
 
 # Import core logic
-from ..core import main as core_logic
+from core import main as core_logic
 
 # Load environment variables
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
