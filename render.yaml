@@ -29,7 +29,7 @@ services:
     plan: free # Use Render's free web service tier
     region: oregon # Or your preferred region
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn Chatbot.platforms.whatsapp_bot:app"
+    startCommand: "gunicorn platforms.whatsapp_bot:app"
     envVars:
       - fromGroup: common-secrets # Inherits GEMINI_API_KEY and DATABASE_URL
       - key: TWILIO_ACCOUNT_SID
@@ -47,11 +47,9 @@ services:
     plan: free # Use Render's free web service tier
     region: oregon # Or your preferred region
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python -m Chatbot.platforms.telegram_bot"
+    startCommand: "python -m platforms.telegram_bot"
     envVars:
       - fromGroup: common-secrets # Inherits GEMINI_API_KEY and DATABASE_URL
-      - key: PYTHONPATH # Explicitly set here too for testing
-        value: "/opt/render/project/src"
       - key: TELEGRAM_BOT_TOKEN
         value: "YOUR_TELEGRAM_BOT_TOKEN_HERE" # Replace in Render dashboard
 
@@ -62,10 +60,8 @@ services:
     plan: free # Use Render's free web service tier
     region: oregon # Or your preferred region
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python -m Chatbot.platforms.discord_bot"
+    startCommand: "python -m platforms.discord_bot"
     envVars:
       - fromGroup: common-secrets # Inherits GEMINI_API_KEY, PYTHONPATH, and DATABASE_URL
-      - key: PYTHONPATH # Explicitly set here too for testing
-        value: "/opt/render/project/src"
       - key: DISCORD_BOT_TOKEN
         value: "YOUR_DISCORD_BOT_TOKEN_HERE" # Replace in Render dashboard
