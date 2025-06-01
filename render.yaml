@@ -29,7 +29,7 @@ services:
     plan: free # Use Render's free web service tier
     region: oregon # Or your preferred region
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn gemini_multichat_bot.platforms.whatsapp_bot:app"
+    startCommand: "gunicorn chatbot.platforms.whatsapp_bot:app"
     envVars:
       - fromGroup: common-secrets # Inherits GEMINI_API_KEY and DATABASE_URL
       - key: TWILIO_ACCOUNT_SID
@@ -47,7 +47,7 @@ services:
     plan: free # Use Render's free web service tier
     region: oregon # Or your preferred region
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python -m gemini_multichat_bot.platforms.telegram_bot"
+    startCommand: "python -m chatbot.platforms.telegram_bot"
     envVars:
       - fromGroup: common-secrets # Inherits GEMINI_API_KEY and DATABASE_URL
       - key: PYTHONPATH # Explicitly set here too for testing
@@ -62,7 +62,7 @@ services:
     plan: free # Use Render's free web service tier
     region: oregon # Or your preferred region
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python -m gemini_multichat_bot.platforms.discord_bot"
+    startCommand: "python -m chatbot.platforms.discord_bot"
     envVars:
       - fromGroup: common-secrets # Inherits GEMINI_API_KEY, PYTHONPATH, and DATABASE_URL
       - key: PYTHONPATH # Explicitly set here too for testing
