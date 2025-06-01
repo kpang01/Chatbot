@@ -32,7 +32,8 @@ intents.members = True # If you need member information
 
 # Initialize the bot
 # Using commands.Bot for command handling
-bot = commands.Bot(command_prefix="!", intents=intents) # Using '!' as the command prefix
+# Disable the default help command to use our custom one
+bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 @bot.event
 async def on_ready():

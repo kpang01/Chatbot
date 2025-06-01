@@ -8,5 +8,6 @@ gunicorn # For running Flask app in production
 pytz # For APScheduler timezone issue
 APScheduler==3.10.0 # Pinning version for timezone issue
 psycopg2-binary # For PostgreSQL
+PyNaCl # Added for Discord voice support (removes warning)
 # Add other dependencies here as needed, e.g.:
 # FastAPI (if we build a web server for webhooks)
